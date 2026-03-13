@@ -563,10 +563,10 @@
     </style>
   </head>
   <body>
-    <canvas id="gameCanvas"></canvas>
+    <canvas id="gameCanvas" class="hidden"></canvas>
     <div class="scanlines"></div>
 
-    <div id="hud">
+    <div id="hud" class="hidden">
       <div class="hud-top-left">
         <div class="health-container">
           <div class="health-label">SHIELD INTEGRITY</div>
@@ -596,15 +596,23 @@
       <div class="subtitle">OVERKILL EXPERIENCE</div>
       <div class="menu-buttons">
         <button class="menu-btn" id="playBtn">PLAY</button>
-        <button class="menu-btn leaderboard-btn" id="leaderboardBtn">LEADERBOARD</button>
+        <button class="menu-btn leaderboard-btn" id="leaderboardBtn">
+          LEADERBOARD
+        </button>
       </div>
     </div>
 
     <div id="difficultySelect" class="hidden">
-      <div class="game-title" style="font-size: 48px;">SELECT DIFFICULTY</div>
+      <div class="game-title" style="font-size: 48px">SELECT DIFFICULTY</div>
       <div class="name-input-container">
         <div class="name-input-label">ENTER YOUR NAME</div>
-        <input type="text" class="name-input" id="playerNameInput" maxlength="12" placeholder="PLAYER" />
+        <input
+          type="text"
+          class="name-input"
+          id="playerNameInput"
+          maxlength="12"
+          placeholder="PLAYER"
+        />
       </div>
       <div class="difficulty-options">
         <div class="difficulty-option" data-difficulty="easy">
@@ -646,17 +654,28 @@
     </div>
 
     <div id="leaderboardScreen" class="hidden">
-      <div class="game-title" style="font-size: 48px;">LEADERBOARD</div>
+      <div class="game-title" style="font-size: 48px">LEADERBOARD</div>
       <div class="leaderboard-tabs">
         <button class="leaderboard-tab active" data-diff="easy">EASY</button>
         <button class="leaderboard-tab" data-diff="normal">NORMAL</button>
         <button class="leaderboard-tab" data-diff="hard">HARD</button>
       </div>
-      <div class="leaderboard-container" style="position: relative; transform: none; top: auto; left: auto; margin: 0 auto;">
+      <div
+        class="leaderboard-container"
+        style="
+          position: relative;
+          transform: none;
+          top: auto;
+          left: auto;
+          margin: 0 auto;
+        "
+      >
         <div class="leaderboard-title" id="leaderboardTitle">EASY MODE</div>
         <div id="leaderboardEntries"></div>
       </div>
-      <button class="back-btn" id="backToMenuFromLeaderboard">BACK TO MENU</button>
+      <button class="back-btn" id="backToMenuFromLeaderboard">
+        BACK TO MENU
+      </button>
     </div>
 
     <div id="startScreen">
@@ -867,7 +886,10 @@
         leaderboard.push({ name, score, difficulty, date: Date.now() });
         leaderboard.sort((a, b) => b.score - a.score);
         const topEntries = leaderboard.slice(0, MAX_LEADERBOARD_ENTRIES);
-        localStorage.setItem(LEADERBOARD_KEY + "_" + difficulty, JSON.stringify(topEntries));
+        localStorage.setItem(
+          LEADERBOARD_KEY + "_" + difficulty,
+          JSON.stringify(topEntries),
+        );
         return topEntries;
       }
 
@@ -876,17 +898,22 @@
         const leaderboard = getLeaderboard(diff);
         const container = document.getElementById("leaderboardEntries");
         const title = document.getElementById("leaderboardTitle");
-        
-        const diffNames = { easy: "EASY MODE", normal: "NORMAL MODE", hard: "HARD MODE" };
+
+        const diffNames = {
+          easy: "EASY MODE",
+          normal: "NORMAL MODE",
+          hard: "HARD MODE",
+        };
         title.textContent = diffNames[diff];
 
         // Update tab active states
-        document.querySelectorAll(".leaderboard-tab").forEach(tab => {
+        document.querySelectorAll(".leaderboard-tab").forEach((tab) => {
           tab.classList.toggle("active", tab.dataset.diff === diff);
         });
-        
+
         if (leaderboard.length === 0) {
-          container.innerHTML = '<div class="leaderboard-empty">No scores yet</div>';
+          container.innerHTML =
+            '<div class="leaderboard-empty">No scores yet</div>';
           return;
         }
 
@@ -898,7 +925,7 @@
               <span class="leaderboard-name">${entry.name}</span>
               <span class="leaderboard-score">${entry.score.toLocaleString()}</span>
             </div>
-          `
+          `,
           )
           .join("");
       }
@@ -910,6 +937,18 @@
         document.getElementById("startScreen").classList.add("hidden");
         document.getElementById("gameOverScreen").classList.add("hidden");
         document.getElementById(screenId).classList.remove("hidden");
+
+        // Hide HUD and canvas when showing menu screens
+        if (
+          screenId === "mainMenu" ||
+          screenId === "difficultySelect" ||
+          screenId === "leaderboardScreen" ||
+          screenId === "startScreen" ||
+          screenId === "gameOverScreen"
+        ) {
+          document.getElementById("hud").classList.add("hidden");
+          document.getElementById("gameCanvas").classList.add("hidden");
+        }
       }
 
       function updatePlayerName() {
@@ -960,8 +999,13 @@
         updatePlayerName();
         init();
         gameState = "PLAYING";
+        // Hide all screens
         document.getElementById("startScreen").classList.add("hidden");
         document.getElementById("gameOverScreen").classList.add("hidden");
+        document.getElementById("difficultySelect").classList.add("hidden");
+        // Show HUD and canvas when game starts
+        document.getElementById("hud").classList.remove("hidden");
+        document.getElementById("gameCanvas").classList.remove("hidden");
       }
 
       function spawnEnemy() {
@@ -1347,6 +1391,9 @@
           document.getElementById("finalScore").textContent = score;
           document.getElementById("finalWave").textContent = wave;
           document.getElementById("gameOverScreen").classList.remove("hidden");
+          // Hide HUD and canvas when game ends
+          document.getElementById("hud").classList.add("hidden");
+          document.getElementById("gameCanvas").classList.add("hidden");
         }
       }
 
@@ -1577,6 +1624,11 @@
       }
 
       function render() {
+        // Only render when playing
+        if (gameState !== "PLAYING") {
+          return;
+        }
+
         ctx.save();
         ctx.translate(screenShake.x, screenShake.y);
 
@@ -1658,29 +1710,37 @@
         showScreen("difficultySelect");
       });
 
-      document.getElementById("leaderboardBtn").addEventListener("click", () => {
-        gameState = "LEADERBOARD";
-        displayLeaderboard("easy");
-        showScreen("leaderboardScreen");
-      });
+      document
+        .getElementById("leaderboardBtn")
+        .addEventListener("click", () => {
+          gameState = "LEADERBOARD";
+          displayLeaderboard("easy");
+          showScreen("leaderboardScreen");
+        });
 
-      document.getElementById("backToMenuFromDiff").addEventListener("click", () => {
-        gameState = "MENU";
-        showScreen("mainMenu");
-      });
+      document
+        .getElementById("backToMenuFromDiff")
+        .addEventListener("click", () => {
+          gameState = "MENU";
+          showScreen("mainMenu");
+        });
 
-      document.getElementById("backToMenuFromLeaderboard").addEventListener("click", () => {
-        gameState = "MENU";
-        showScreen("mainMenu");
-      });
+      document
+        .getElementById("backToMenuFromLeaderboard")
+        .addEventListener("click", () => {
+          gameState = "MENU";
+          showScreen("mainMenu");
+        });
 
-      document.getElementById("backToMenuFromGameOver").addEventListener("click", () => {
-        gameState = "MENU";
-        showScreen("mainMenu");
-      });
+      document
+        .getElementById("backToMenuFromGameOver")
+        .addEventListener("click", () => {
+          gameState = "MENU";
+          showScreen("mainMenu");
+        });
 
       // Leaderboard tab event listeners
-      document.querySelectorAll(".leaderboard-tab").forEach(tab => {
+      document.querySelectorAll(".leaderboard-tab").forEach((tab) => {
         tab.addEventListener("click", () => {
           displayLeaderboard(tab.dataset.diff);
         });
